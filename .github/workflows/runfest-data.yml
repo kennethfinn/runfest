@@ -4,7 +4,7 @@ on:
     branches: [main]
     paths: ['scripts/update_runfest.py', '.github/workflows/runfest-data.yml']
   schedule:
-    - cron: '4-59/5 6-22 3 10 *'
+    - cron: '2,7,12,17,22,27,32,37,42,47,52,57 6-22 3 10 *'
     - cron: '19 7 4 10 *'
   workflow_dispatch:
 permissions:
@@ -15,21 +15,17 @@ concurrency:
 jobs:
   refresh:
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 310
     steps:
       - uses: actions/checkout@v4
-      - name: Limit automatic collection to this event
-        id: window
+      - name: Keep RUNFEST lists and results current through race day
+        shell: bash
         run: |
-          if [[ "$(date -u +%Y-%m-%d)" < "2026-10-05" ]]; then
-            echo "active=true" >> "$GITHUB_OUTPUT"
+          event_day="$(date -u +%Y-%m-%d)"
+          if [[ "$event_day" < "2026-10-03" || "$event_day" > "2026-10-04" ]]; then
+            exit 0
           fi
-      - name: Fetch and validate public start lists and results
-        if: steps.window.outputs.active == 'true'
-        run: python3 scripts/update_runfest.py "$RUNNER_TEMP/runfest-data.json"
-      - name: Publish latest snapshot
-        if: steps.window.outputs.active == 'true'
-        run: |
+          cp scripts/update_runfest.py "$RUNNER_TEMP/update_runfest.py"
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           if git ls-remote --exit-code --heads origin runfest-data; then
@@ -37,8 +33,25 @@ jobs:
             git switch -C runfest-data FETCH_HEAD
           else
             git switch --orphan runfest-data
+            git rm -rf .
           fi
-          cp "$RUNNER_TEMP/runfest-data.json" runfest-data.json
-          git add runfest-data.json
-          git commit -m "Update RUNFEST start lists and results"
-          git push origin HEAD:runfest-data
+          rounds=1
+          if [[ "$event_day" == "2026-10-03" ]]; then rounds=60; fi
+          successful=0
+          for ((round=1; round<=rounds; round++)); do
+            if python3 "$RUNNER_TEMP/update_runfest.py" "$RUNNER_TEMP/runfest-data.json"; then
+              cp "$RUNNER_TEMP/runfest-data.json" runfest-data.json
+              git add runfest-data.json
+              if ! git diff --cached --quiet; then
+                git commit -m "Update RUNFEST start lists and results"
+                git push origin HEAD:runfest-data
+              fi
+              successful=$((successful + 1))
+              echo "Published RUNFEST snapshot at $(date -u +%FT%TZ)"
+            else
+              echo "::warning::EQ Timing fetch failed; keeping the last valid snapshot and retrying."
+            fi
+            if [[ "$(date -u +%Y-%m-%d)" != "2026-10-03" || "$round" == "$rounds" ]]; then break; fi
+            sleep 300
+          done
+          if [[ "$successful" == "0" ]]; then exit 1; fi
