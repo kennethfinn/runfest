@@ -19,21 +19,7 @@
   }
   function render(data){
     for(const race of data.races){
-      let details=$(race.id);
-      if(!details){
-        details=node('details',undefined,'panel race');details.id=race.id;
-        const summary=node('summary');summary.append(node('span',race.start,'time'));
-        const label=node('span',race.name,'summary-label');label.append(node('span','','count'));summary.append(label);details.append(summary);
-        const content=node('div',undefined,'race-content'),input=node('input');input.type='search';input.placeholder='Søk navn, startnummer eller klubb';input.setAttribute('aria-label',`Søk i ${race.name}`);
-        content.append(input,node('p','','note filter-count'));
-        const wrap=node('div',undefined,'table-wrap'),table=node('table'),head=node('thead'),tr=node('tr');
-        for(const text of ['Nr.','Navn','Klubb / lag','Klasse','Plass i klasse','Tid','Status']){const th=node('th',text);th.scope='col';tr.append(th);}
-        head.append(tr);table.append(head,node('tbody'));wrap.append(table);content.append(wrap);details.append(content);$('races').append(details);
-        input.addEventListener('input',()=>renderRows(lastData.races.find(r=>r.id===race.id),content,input.value));
-      }
-      const n=race.participants.length,finished=race.participants.filter(p=>p.status==='Fullført').length;
-      details.querySelector('.count').textContent=n?`${n} deltakere${finished?` · ${finished} med resultat`:''}`:'Navn er ikke publisert ennå';
-      renderRows(race,details.querySelector('.race-content'),details.querySelector('input').value);
+      if($('race-dialog').open && $('race-list').dataset.race===race.id)showRace(race);
     }
   }
   function status(data, fallback=false){
@@ -48,7 +34,7 @@
       if(d.event_date!=='2026-10-03'||!Number.isFinite(Date.parse(d.updated_at))||d.races?.length!==5||!d.races.every(r=>Array.isArray(r.participants)))throw Error('Ugyldige løpsdata');return d;
     }finally{clearTimeout(timeout);}
   }
-  function openHash(){const id=decodeURIComponent(location.hash.slice(1));const race=$(id);if(race?.tagName==='DETAILS'){race.open=true;race.scrollIntoView({block:'start'});}}
+  function openHash(){const id=decodeURIComponent(location.hash.slice(1)),race=lastData?.races.find(r=>r.id===id);if(race){showRace(race);if(!$('race-dialog').open)$('race-dialog').showModal();}}
   async function load(){
     if(busy)return;busy=true;$('refresh').disabled=true;
     try{
@@ -61,7 +47,27 @@
     }catch(e){$('status').className='status error';$('status').textContent=lastData?`Kunne ikke hente oppdateringer. Viser lister fra ${dateFormat.format(Date.parse(lastData.updated_at))}.`:'Startlistene er utilgjengelige akkurat nå. Timeplanen over gjelder. Prøv igjen, eller åpne EQ Timing nedenfor.';}
     finally{busy=false;$('refresh').disabled=false;}
   }
-  document.querySelectorAll('.schedule a').forEach(a=>a.addEventListener('click',()=>{const race=$(a.hash.slice(1));if(race)race.open=true;}));
+  function showRace(race){
+    const content=$('race-list');content.dataset.race=race.id;
+    $('race-title').textContent=`${race.start} · ${race.name}`;
+    if(!content.querySelector('input')){
+      content.replaceChildren();
+      content.className='race-content';const input=node('input');input.type='search';input.placeholder='Søk navn, startnummer eller klubb';input.setAttribute('aria-label','Søk i startlisten');
+      content.append(input,node('p','','note filter-count'));
+      const wrap=node('div',undefined,'table-wrap'),table=node('table',undefined,'participants'),head=node('thead'),tr=node('tr');
+      for(const text of ['Nr.','Navn','Klubb / lag','Klasse','Plass i klasse','Tid','Status']){const th=node('th',text);th.scope='col';tr.append(th);}
+      head.append(tr);table.append(head,node('tbody'));wrap.append(table);content.append(wrap);
+      input.addEventListener('input',()=>{const current=lastData?.races.find(r=>r.id===content.dataset.race);if(current)renderRows(current,content,input.value);});
+    }
+    renderRows(race,content,content.querySelector('input').value);
+  }
+  document.querySelectorAll('.schedule a').forEach(link=>link.addEventListener('click',event=>{
+    event.preventDefault();const race=lastData?.races.find(r=>r.id===link.hash.slice(1));
+    $('race-list').replaceChildren();
+    if(race)showRace(race);else{$('race-title').textContent=link.closest('tr').children[1].textContent;$('race-list').append(node('p','Startlisten er ikke tilgjengelig akkurat nå. Prøv «Oppdater lister», eller åpne EQ Timing nederst på siden.'));}
+    $('race-dialog').showModal();
+  }));
+  $('close-race').addEventListener('click',()=>$('race-dialog').close());
   window.addEventListener('hashchange',openHash);$('refresh').addEventListener('click',load);
   document.addEventListener('visibilitychange',()=>{if(!document.hidden)load();});
   load();setInterval(()=>{if(!document.hidden)load();},60000);

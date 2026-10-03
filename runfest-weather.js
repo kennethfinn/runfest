@@ -7,6 +7,7 @@
   const clockFormat=new Intl.DateTimeFormat('nb-NO',{timeZone:zone,hour:'2-digit',minute:'2-digit'});
   const hourFormat=new Intl.DateTimeFormat('en-GB',{timeZone:zone,hour:'2-digit',hourCycle:'h23'});
   const numberFormat=new Intl.NumberFormat('nb-NO',{minimumFractionDigits:1,maximumFractionDigits:1});
+  const raceStarts=[['11:30','Halvmaraton · 21 km'],['15:00','10 km'],['17:00','5 km miks'],['18:15','5 km elite kvinner'],['18:35','5 km elite menn']];
   let lastData=null,lastFetched=null,busy=false;
   const localDate=()=>new Intl.DateTimeFormat('sv-SE',{timeZone:zone,year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date());
   const number=v=>typeof v==='number'&&Number.isFinite(v)?numberFormat.format(v):'—';
@@ -20,7 +21,10 @@
     for(const i of indices){
       const tr=document.createElement('tr'),time=h.time[i].slice(11,16);
       if(time.slice(0,2)===currentHour){tr.className='current';tr.setAttribute('aria-label','Inneværende time');}
-      cell(tr,time);cell(tr,number(h.temperature_2m[i]));cell(tr,number(h.precipitation[i]));cell(tr,number(h.wind_speed_10m[i]));cell(tr,number(h.wind_gusts_10m[i]));
+      const timeCell=cell(tr,time);
+      const starts=today==='2026-10-03'?raceStarts.filter(([start])=>start.slice(0,2)===time.slice(0,2)):[];
+      if(starts.length){tr.classList.add('race-hour');for(const [start,name] of starts){const label=document.createElement('span');label.className='race-start';label.textContent=`${start} · ${name}`;timeCell.append(label);}}
+      cell(tr,number(h.temperature_2m[i]));cell(tr,number(h.precipitation[i]));cell(tr,number(h.wind_speed_10m[i]));cell(tr,number(h.wind_gusts_10m[i]));
       const td=cell(tr,''),raw=h.wind_direction_10m[i];
       if(typeof raw==='number'&&Number.isFinite(raw)){
         const deg=((raw%360)+360)%360,arrow=document.createElement('span'),degrees=document.createElement('span');
