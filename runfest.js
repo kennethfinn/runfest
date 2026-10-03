@@ -38,7 +38,7 @@
   }
   async function fetchData(url){
     const controller=new AbortController(),timeout=setTimeout(()=>controller.abort(),20000);
-    try{const r=await fetch(url,{cache:'no-store',signal:controller.signal});if(!r.ok)throw Error(`HTTP ${r.status}`);const d=await r.json();
+    try{const r=await fetch(url,{cache:'no-store',signal:controller.signal,headers:{Accept:'application/vnd.github.raw+json'}});if(!r.ok)throw Error(`HTTP ${r.status}`);const d=await r.json();
       if(d.event_date!=='2026-10-03'||!Number.isFinite(Date.parse(d.updated_at))||d.races?.length!==5||!d.races.every(r=>Array.isArray(r.participants)))throw Error('Ugyldige løpsdata');return d;
     }finally{clearTimeout(timeout);}
   }
@@ -48,7 +48,10 @@
     try{
       let fallback=false,data;
       try{data=await fetchData(remote+'?t='+Math.floor(Date.now()/60000));}
-      catch(e){if(lastData)throw e;data=await fetchData('runfest-data.json');fallback=true;}
+      catch(e){
+        try{data=await fetchData('https://api.github.com/repos/kennethfinn/runfest/contents/runfest-data.json?ref=runfest-data&t='+Math.floor(Date.now()/300000));}
+        catch(apiError){if(lastData)throw apiError;data=await fetchData('runfest-data.json');fallback=true;}
+      }
       if(!lastData||Date.parse(data.updated_at)>=Date.parse(lastData.updated_at)){lastData=data;render(data);}
       status(lastData,fallback);
       if(location.hash&&!load.opened){openHash();load.opened=true;}
@@ -78,5 +81,5 @@
   $('close-race').addEventListener('click',()=>$('race-dialog').close());
   window.addEventListener('hashchange',openHash);$('refresh').addEventListener('click',load);
   document.addEventListener('visibilitychange',()=>{if(!document.hidden)load();});
-  load();setInterval(()=>{if(!document.hidden)load();},60000);
+  load();setInterval(()=>{if(!document.hidden)load();},300000);
 })();
