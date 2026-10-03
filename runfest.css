@@ -7,3 +7,10 @@
 @media(max-width:650px){.weather{table-layout:fixed}.weather th,.weather td{white-space:normal;overflow-wrap:anywhere}.weather th:first-child{width:26%}.weather th:last-child{width:18%}.race-start{font-size:10px}.race-detail .race-content{padding:12px 5px}.schedule .race-detail>td{padding:0}.race-toggle{font-size:12px}.weather th{padding:10px 3px}.weather td{padding:12px 3px}}
 
 dialog{color:var(--text);background:#101d30;border:1px solid var(--line);border-radius:18px;width:min(1100px,calc(100% - 28px));max-height:90dvh;padding:20px}dialog::backdrop{background:rgba(0,0,0,.7)}.dialog-heading{display:flex;gap:16px;justify-content:space-between;align-items:center;margin-bottom:16px}.dialog-heading h2{font-size:20px}dialog .race-content{padding:0}dialog input{background:#081523;border:1px solid #36516d;border-radius:10px;color:var(--text);padding:11px 12px;font:inherit;width:min(100%,440px);margin-bottom:10px}dialog .table-wrap{max-height:60dvh}.participants{min-width:690px}.participants thead{position:sticky;top:0;background:#101d30;z-index:1}.participants td:nth-child(2){font-weight:650}
+
+/* Respect the iPhone status bar and home indicator in home-screen mode. */
+:root{--page-padding:24px}
+.wrap{padding:calc(var(--page-padding) + env(safe-area-inset-top,0px)) max(var(--page-padding),env(safe-area-inset-right,0px)) calc(var(--page-padding) + env(safe-area-inset-bottom,0px)) max(var(--page-padding),env(safe-area-inset-left,0px))}
+.weather th{top:env(safe-area-inset-top,0px)}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);background:var(--bg);z-index:20;pointer-events:none}
+@media(max-width:650px){:root{--page-padding:14px}}
