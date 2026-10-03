@@ -19,6 +19,14 @@
   }
   function render(data){
     for(const race of data.races){
+      const link=document.querySelector(`.schedule a[href="#${race.id}"]`);
+      if(link){
+        const cell=link.closest('tr').children[1];
+        let count=cell.querySelector('.participant-count');
+        if(!count){count=node('span',undefined,'note participant-count');count.style.display='block';cell.append(count);}
+        const total=race.participants.length,finished=race.participants.filter(p=>p.status==='Fullført').length;
+        count.textContent=total?`${total} deltakere${finished?` · ${finished} med resultat`:''}`:'Navn er ikke publisert ennå';
+      }
       if($('race-dialog').open && $('race-list').dataset.race===race.id)showRace(race);
     }
   }
