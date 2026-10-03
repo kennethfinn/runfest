@@ -1,0 +1,45 @@
+{
+  "id": "/",
+  "name": "RUNFEST · DidWell",
+  "short_name": "RUNFEST",
+  "lang": "nb",
+  "description": "Startlister, resultater og timevarsel for RUNFEST i Sandnes.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#08111f",
+  "theme_color": "#08111f",
+  "icons": [
+    {
+      "src": "/icon-192.png?v=1.31",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-512.png?v=1.31",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-maskable-512.png?v=1.31",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "RUNFEST Weather",
+      "short_name": "Været",
+      "url": "/weather.html",
+      "icons": [
+        {
+          "src": "/icon-192.png?v=1.31",
+          "sizes": "192x192"
+        }
+      ]
+    }
+  ]
+}
