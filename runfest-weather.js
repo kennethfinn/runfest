@@ -1,5 +1,14 @@
 (() => {
   'use strict';
+  // RUNFEST ended: stop all weather requests while preserving the implementation below.
+  const weatherEnabled = false;
+  if (!weatherEnabled) {
+    const status = document.getElementById('status');
+    if (status) status.textContent = 'Værinnhentingen er avsluttet.';
+    const refresh = document.getElementById('refresh');
+    if (refresh) refresh.disabled = true;
+    return;
+  }
   const $=id=>document.getElementById(id);
   const zone='Europe/Oslo';
   const api='https://api.open-meteo.com/v1/forecast?latitude=58.8517&longitude=5.7360&hourly=temperature_2m,precipitation,wind_speed_10m,wind_gusts_10m,wind_direction_10m&temperature_unit=celsius&precipitation_unit=mm&wind_speed_unit=ms&timezone=Europe%2FOslo&forecast_days=1';
